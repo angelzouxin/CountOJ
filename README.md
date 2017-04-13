@@ -1,7 +1,5 @@
 # CountOJ
-Crawler each persons of school ACM-ICPC team’s online-judges Accepted, Submissions and Accepted Problems ID
-
-Count Accepted and submissions everyday
+Crawl each person’s training info who is one of school’s ACM/ICPC team members that submit problems to online-judges, it contains the status of Submissions , Accepted , and problem ID, what’s more , it records the total Accepted and submissions everyday
 
 drawing on the experience of [kidozh](https://github.com/kidozh)
 
