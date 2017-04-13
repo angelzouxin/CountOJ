@@ -11,10 +11,10 @@ supportedOJ
 1.import team info into excel like this
 
 
-user_id | user_name | oj_id1| oj_id2| ... |
+user_id | user_name | ojID1| ojID2| ... |
 ---- | ---- | ---- | ---- | ---- |
-id1 | name1 | oj_id1_1 | oj_id1_2|...| 
-id2 |  name2 | oj_id2_1| oj_id2_2|...|
+id1 | name1 | ojID1_1 | ojID1_2|...| 
+id2 |  name2 | ojID2_1| ojID2_2|...|
 
 2.run acManager.py
 
