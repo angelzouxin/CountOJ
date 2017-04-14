@@ -149,20 +149,20 @@ if __name__ == '__main__':
     oneDay = datetime.timedelta(days=1)
     yesterday = today - oneDay
     fileName = headName + today.strftime(sufNameFormat)
-    preName =  'total_'+yesterday.strftime(sufNameFormat)
+    preName = 'total_'+yesterday.strftime(sufNameFormat)
     totalName = 'total_'+today.strftime(sufNameFormat)
 
-    #get pre ac info
+    # get pre ac info
     pre_acManager = AcManager()
-    pre_acManager.get_pre_info(preName)
+    pre_acManager.get_pre_info(preName+'.xls')
 
-    #get team info and count
+    # get team info and count
     total_acManager = AcManager()
     total_acManager.get_IDlist('id_list.xls')
     total_acManager.get_count()
     # total_acManager.get_pre_info(preName)
 
-    #get substract
+    # get substract
     today_acManager = AcManager.get_today_mes(total_acManager, pre_acManager)
-    total_acManager.save_count(totalName)
+    total_acManager.save_count(totalName + '.xls')
     today_acManager.save_count(fileName + '.xls')

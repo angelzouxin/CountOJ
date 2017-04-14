@@ -1,13 +1,13 @@
 # coding=utf-8
 
-__author__ = 'zouxin'
-
-import urllib
-from urllib import request
-from  urllib import parse
 import http.cookiejar
-import re
 import json
+import re
+import urllib
+from urllib import parse
+from urllib import request
+
+__author__ = 'zouxin'
 
 
 class Crawler:
@@ -25,7 +25,7 @@ class Crawler:
     # match dictionary.dict[oj]:[acRegex],[submitRegex]
     matchDict = {}
     supportedOJ = ['poj', 'hdu', 'zoj', 'codeforces', 'fzu', 'acdream', 'bzoj', 'ural', 'csu', 'hust', 'spoj', 'sgu',
-                   'vjudge', 'bnu', 'cqu', 'uestc', 'zucc']
+                   'vjudge', 'bnu', 'cqu', 'uestc', 'zucc', 'codechef']
 
     def __init__(self, queryName={}):
         '''
@@ -241,7 +241,7 @@ class Crawler:
             self.wrongOJ[oj].append(name)
             return 0
 
-    def getcodeforces(self, queryName=''):
+    def getCodeforces(self, queryName=''):
         '''
         get JSON information from codeforces API and parser it
         :param queryName:
@@ -299,7 +299,6 @@ class Crawler:
         :param queryName:
         :return: Boolean value which indicates success
         '''
-        import tornado.httpclient
         import tornado.gen
         oj = 'codeforces'
         print('start CodeForce')
@@ -359,6 +358,63 @@ class Crawler:
             else:
                 break
 
+    def getCodechef(self, queryName=''):
+        '''
+        get JSON information from codechef Get Request and parser it
+        :param queryName:
+        :return: Boolean value which indicates success
+        '''
+        oj = 'codechef'
+        if queryName == '':
+            name = self.getName(oj)
+        else:
+            name = queryName
+        req = urllib.request.Request(
+            url='https://www.codechef.com/recent/user?page=0&user_handle=%s' % name,
+            headers=self.headers
+        )
+        jsonString = ''
+        try:
+            jsonString = self.opener.open(req).read().decode('utf8')
+        except:
+            self.wrongOJ[oj].append(name)
+            return 0
+        dataDict = json.loads(jsonString)
+        max_page = dataDict['max_page']
+        if max_page == 0:
+            self.submitNum[oj] += 0
+            self.acArchive[oj] = self.acArchive[oj] | set()
+            return 0
+        for page_num in range(0, max_page):
+            req = urllib.request.Request(
+                url='https://www.codechef.com/recent/user?page={}&user_handle={}'.format(page_num, name),
+                headers=self.headers
+            )
+            jsonString = ''
+            try:
+                jsonString = self.opener.open(req).read().decode('utf8')
+            except:
+                self.wrongOJ[oj].append(name)
+                return 0
+            dataDict = json.loads(jsonString)
+            html = str(dataDict['content'])
+            acProblems = []
+            submitNum = 0
+            try:
+                submission = re.findall(r'_blank', html, re.S)
+                submitNum += len(submission)
+                acProblem = re.findall(r"a href='.*?' title='' target='_blank'>.*?</a></td><td ><span title='accepted'",
+                                       html, re.S)
+                acProblems += [re.findall(r"'.*?'", pro)[0].strip("'") for pro in acProblem]
+                print("pages is {}".format(page_num))
+            except:
+                self.wrongOJ[oj].append(name)
+                return 0
+                # print(self.acArchive[oj],self.submitNum[oj])
+        self.acArchive[oj] = self.acArchive[oj] | set(acProblems)
+        self.submitNum[oj] += submitNum
+        return len(self.submission[oj])
+
     def getSpoj(self, queryName=''):
         oj = 'spoj'
         if queryName == '':
@@ -392,7 +448,6 @@ class Crawler:
         :param queryName:
         :return:
         '''
-        import tornado.httpclient
         import tornado.gen
         oj = 'vjudge'
         if queryName == '':
@@ -485,7 +540,6 @@ class Crawler:
         :param queryName:
         :return:
         '''
-        import tornado.httpclient
         import tornado.gen
         oj = 'vjudge'
         if queryName == '':
@@ -648,13 +702,14 @@ class Crawler:
         self.name = self.dict_name['default']
         return True
 
-    def getName(self, oj_name):
-        return self.name if self.dict_name.get(oj_name) is None else self.dict_name.get(oj_name)
+    def getName(self, ojName):
+        return self.name if self.dict_name.get(ojName) is None else self.dict_name.get(ojName)
 
     def run(self):
         self.getInfoNoAuth()
         self.getACdream()
-        self.getcodeforces()
+        self.getCodechef()
+        self.getCodeforces()
         self.getSpoj()
         self.getUestc()
         self.getVjudge()
@@ -662,18 +717,18 @@ class Crawler:
 
 if __name__ == '__main__':
     a = Crawler(queryName={'default': 'sillyrobot', 'zucc': '31601185', 'vjudge': 'hxamszi'})
-    print(a.asyncGetVjudge())
+    print(a.getCodechef('uwi'))
 
     # print (a.getNoAuthRules())
     # a.getInfoNoAuth()
     # a.getACdream()
-    # print("get codeforce now")
-    # a.getcodeforces()
+    # print("get Codeforce now")
+    # a.getCodeforces()
     # print("get spoj now")
     # a.getSpoj()
     # print("get uestc now")
     # a.getUestc()
     # print("get vj now")
-    a.getVjudge()
-    print(a.acArchive)
-    print(a.submitNum)
+    # a.getVjudge()
+    # print(a.acArchive)
+    # print(a.submitNum)

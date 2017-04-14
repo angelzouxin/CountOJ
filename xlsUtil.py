@@ -7,8 +7,8 @@ import xlwt
 
 
 class xlsUtil:
-    ezxf = xlwt.easyxf
-    heading_xf = ezxf('font: bold on; align:wrap on, vert centre, horiz center')
+
+    heading_xf = xlwt.easyxf('font: bold on; align:wrap on, vert centre, horiz center')
 
     @staticmethod
     def write_xls(sheet_name, headings, data):
@@ -35,9 +35,9 @@ class xlsUtil:
 
     @staticmethod
     def read_xls(file_name, sheet_name):
-        datas = xlrd.open_workbook(file_name)
-        tabel = datas.sheet_by_name(sheet_name)
+        data = xlrd.open_workbook(file_name)
+        tabel = data.sheet_by_name(sheet_name)
         rows, cols = tabel.nrows, tabel.ncols
         head = tabel.row_values(0)
-        datas = [tabel.row_values(row) for row in range(1, rows)]
-        return head, datas
+        data = [tabel.row_values(row) for row in range(1, rows)]
+        return head, data
