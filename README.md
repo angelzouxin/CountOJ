@@ -3,7 +3,7 @@ Crawl each person’s training info who is one of school’s ACM/ICPC team membe
 
 drawing on the experience of [kidozh](https://github.com/kidozh)
 
-##supportedOJ
+### supportedOJ
 
 'poj', 'hdu', 'zoj', 'codeforces', ‘codechef', 'fzu', 'acdream', 'bzoj', 'ural', 'csu', 'hust', 'spoj', 'sgu', 'vjudge', 'bnu', 'cqu', 'uestc'
 
