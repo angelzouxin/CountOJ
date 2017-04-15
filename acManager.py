@@ -160,7 +160,6 @@ if __name__ == '__main__':
     total_acManager = AcManager()
     total_acManager.get_IDlist('id_list.xls')
     total_acManager.get_count()
-    # total_acManager.get_pre_info(preName)
 
     # get substract
     today_acManager = AcManager.get_today_mes(total_acManager, pre_acManager)

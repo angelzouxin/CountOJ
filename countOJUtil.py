@@ -708,7 +708,7 @@ class Crawler:
     def run(self):
         self.getInfoNoAuth()
         self.getACdream()
-        self.getCodechef()
+        # self.getCodechef()
         self.getCodeforces()
         self.getSpoj()
         self.getUestc()
@@ -717,8 +717,7 @@ class Crawler:
 
 if __name__ == '__main__':
     a = Crawler(queryName={'default': 'sillyrobot', 'zucc': '31601185', 'vjudge': 'hxamszi'})
-    print(a.getCodechef('uwi'))
-
+    a.getVjudge()
     # print (a.getNoAuthRules())
     # a.getInfoNoAuth()
     # a.getACdream()
