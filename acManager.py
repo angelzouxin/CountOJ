@@ -1,12 +1,12 @@
 # coding=utf-8
 
-__author__ = 'zouxin'
-
 import datetime
 import time
 
 import xlrd
 from xlwt import *
+
+__author__ = 'zouxin'
 
 
 class AcManager:
@@ -14,18 +14,19 @@ class AcManager:
                    'vjudge', 'bnu', 'cqu', 'uestc', 'zucc']
 
     def __init__(self):
+        self.crawled_time = time.strftime('%Y-%m-%d %a %H:%M', time.localtime(time.time()))
         self.user_list = []
         self.col_id = []
 
     def get_IDlist(self, id_file):
+        self.crawled_time = time.strftime('%Y-%m-%d %a %H:%M', time.localtime(time.time()))
         self.data = xlrd.open_workbook(id_file)
-        self.crawel_date = time.strftime('%Y-%m-%d %a %H:%M', time.localtime(time.time()))
-        tabel = self.data.sheet_by_index(0)
-        rows, cols = tabel.nrows, tabel.ncols
-        head = tabel.row_values(0)
+        table = self.data.sheet_by_index(0)
+        rows, cols = table.nrows, table.ncols
+        head = table.row_values(0)
         self.col_id = [head[idx] for idx in range(cols)]
         for row in range(1, rows):
-            mes = tabel.row_values(row)
+            mes = table.row_values(row)
             id, name = mes[:2]
             id = int(id)
             oj_id = {self.col_id[idx]: (type(mes[idx]) == float and str(int(mes[idx])) or mes[idx]) for idx in
@@ -35,7 +36,7 @@ class AcManager:
             print({id, name}, oj_id)
             self.user_list.append([id, name, oj_id])
 
-    #get pre info from excel
+    # get pre info from excel
     def get_pre_info(self, info_file, sheet_name1='ac_count', sheet_name2='ac_submission'):
         from xlsUtil import xlsUtil
         self.info = xlrd.open_workbook(info_file)
@@ -44,23 +45,25 @@ class AcManager:
 
         info_head, info_achieve = xlsUtil.read_xls(info_file, sheet_name2)
 
-        self.crawel_date = info_data[0][-1]
+        self.crawled_time = info_data[0][-1]
         # print(self.crawel_date)
 
-        idx, col = 0, len(info_data)
+        rows, col = 0, len(info_data)
         for ac_num in info_achieve:
             # print (ac_num)
-            id, name = ac_num[:2]
-            id = int(id)
-            acArchive = {self.col_id[id]: (
-                ac_num[id] != '' and set(map(lambda x: x.strip("'"), ac_num[id].strip('{}').split(', '))) or set()) for
-            id
+            user_id, user_name = ac_num[:2]
+            user_id = int(user_id)
+            ac_archive = {self.col_id[column]: (
+                ac_num[column] != '' and set(
+                    map(lambda x: x.strip("'"), ac_num[column].strip('{}').split(', '))) or set()) for
+                column
                 in range(2, len(ac_num))}
-            self.user_list.append([id, name, {}, acArchive.copy()])
+            self.user_list.append([user_id, user_name, {}, ac_archive.copy()])
         for ac_sub in info_data:
-            submitNum = {self.col_id[id]: int(ac_sub[id].split('/')[-1]) for id in range(2, len(ac_sub) - 2)}
-            self.user_list[idx].append(submitNum.copy())
-            idx += 1
+            submit_num = {self.col_id[column]: int(ac_sub[column].split('/')[-1]) for column in
+                          range(2, len(ac_sub) - 2)}
+            self.user_list[rows].append(submit_num.copy())
+            rows += 1
 
     def get_count(self):
         from countOJUtil import Crawler
@@ -96,7 +99,7 @@ class AcManager:
                 else:
                     data.append('0/0')
             data.append('%d/%d' % (sum_num, sum_sub))
-            data.append(self.crawel_date)
+            data.append(self.crawled_time)
             datas.append(data)
         xlsUtil.write_xls(ws1, headings, datas)
         ws2 = w.add_sheet('ac_submission')
@@ -116,25 +119,21 @@ class AcManager:
         xlsUtil.write_xls(ws2, headings, datas)
         w.save(out_file)
 
-    #substract pre
+    # get Incremental
     @staticmethod
-    def get_today_mes(today, pre):
+    def get_today_mes(total_mes, pre_mes):
         res = AcManager()
-        # for user in today.user_list:
-        #     print (user[4])
-        today_dic = {data[0]: data[1:] for data in today.user_list}
-        pre_dic = {data[0]: data[1:] for data in pre.user_list}
-        # for user in pre.user_list:
-        #     print(user[:3],user[-1])
-        # print('---------'*10)
-        # for user in today.user_list:
-        #     print(user[:3],user[-1])
-        # print('---------' * 10)
-        res.crawel_date = today.crawel_date
-        res.col_id = today.col_id
+        # count by user's id
+        today_dic = {data[0]: data[1:] for data in total_mes.user_list}
+        pre_dic = {data[0]: data[1:] for data in pre_mes.user_list}
+
+        res.crawled_time = total_mes.crawled_time
+        res.col_id = total_mes.col_id
         res.user_list = [[user] + today_dic[user][:2] + (today_dic[user][2:] if pre_dic.get(user) is None
-                         else ([{oj: today_dic[user][2][oj] if pre_dic[user][2].get(oj) is None else today_dic[user][2][oj] - pre_dic[user][2][oj] for oj in today_dic[user][2]}]
-                               +[{oj: today_dic[user][3][oj] if pre_dic[user][3].get(oj) is None else today_dic[user][3][oj] - pre_dic[user][3][oj] for oj in today_dic[user][3]}]))
+                                                         else ([{oj: today_dic[user][2][oj] if pre_dic[user][2].get(
+            oj) is None else today_dic[user][2][oj] - pre_dic[user][2][oj] for oj in today_dic[user][2]}]
+                                                               + [{oj: today_dic[user][3][oj] if pre_dic[user][3].get(
+            oj) is None else today_dic[user][3][oj] - pre_dic[user][3][oj] for oj in today_dic[user][3]}]))
                          for user in today_dic]
 
         # for user in res.user_list:
@@ -149,19 +148,19 @@ if __name__ == '__main__':
     oneDay = datetime.timedelta(days=1)
     yesterday = today - oneDay
     fileName = headName + today.strftime(sufNameFormat)
-    preName = 'total_'+yesterday.strftime(sufNameFormat)
-    totalName = 'total_'+today.strftime(sufNameFormat)
+    preName = 'total_' + yesterday.strftime(sufNameFormat)
+    totalName = 'total_' + today.strftime(sufNameFormat)
 
     # get pre ac info
     pre_acManager = AcManager()
-    pre_acManager.get_pre_info(preName+'.xls')
+    pre_acManager.get_pre_info(preName + '.xls')
 
     # get team info and count
     total_acManager = AcManager()
     total_acManager.get_IDlist('id_list.xls')
     total_acManager.get_count()
 
-    # get substract
-    today_acManager = AcManager.get_today_mes(total_acManager, pre_acManager)
     total_acManager.save_count(totalName + '.xls')
+    # get Incremental
+    today_acManager = AcManager.get_today_mes(total_acManager, pre_acManager)
     today_acManager.save_count(fileName + '.xls')

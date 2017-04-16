@@ -20,19 +20,21 @@ id2 |  name2 | ojID2_1| ojID2_2|...|
 ```python3
 if __name__ == '__main__':
     ...
-    pre_acManager = AcManager()
-    pre_acManager.get_pre_info(preName)
+    # get pre ac info
+    pre_acManager = AcManager(preName)
+    pre_acManager.get_pre_info()
 
-    #get team info and count
-    total_acManager = AcManager()
-    total_acManager.get_IDlist('id_list.xls')
+    # get team info and count
+    total_acManager = AcManager('id_list.xls')
+    total_acManager.get_IDlist()
     total_acManager.get_count()
-    # total_acManager.get_pre_info(preName)
 
-    #get substract
+    # get Incremental
     today_acManager = AcManager.get_today_mes(total_acManager, pre_acManager)
+
+    # save data
     total_acManager.save_count(totalName)
-    today_acManager.save_count(fileName + '.xls')
+    today_acManager.save_count(fileName)
 ```
 
 

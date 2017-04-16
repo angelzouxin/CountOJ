@@ -3,6 +3,7 @@
 import http.cookiejar
 import json
 import re
+
 import urllib
 from urllib import parse
 from urllib import request
@@ -27,7 +28,7 @@ class Crawler:
     supportedOJ = ['poj', 'hdu', 'zoj', 'codeforces', 'fzu', 'acdream', 'bzoj', 'ural', 'csu', 'hust', 'spoj', 'sgu',
                    'vjudge', 'bnu', 'cqu', 'uestc', 'zucc', 'codechef']
 
-    def __init__(self, queryName={}):
+    def __init__(self, query_name={}):
         '''
         This is the initial part which describe the crawler opener.
         '''
@@ -38,8 +39,8 @@ class Crawler:
         }
         self.cookie = http.cookiejar.CookieJar()
         self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.cookie))
-        self.dict_name = queryName
-        self.name = queryName.get('default')
+        self.dict_name = query_name
+        self.name = query_name.get('default')
         '''
         initialize all the data structure
         '''
@@ -53,15 +54,13 @@ class Crawler:
         '''
         read the dictionary which guide spider to browser website and how to match information
         '''
-        matchDict = {}
-        matchDict['poj'] = {}
 
     def getNoAuthRules(self):
         import configparser
         import os
         cf = configparser.ConfigParser()
-        configFilePath = os.path.join(os.path.dirname(__file__), "regexDict.ini")
-        cf.read(configFilePath)
+        config_file_path = os.path.join(os.path.dirname(__file__), "regexDict.ini")
+        cf.read(config_file_path)
         # travel all the useable site
         return [(oj, cf.get(oj, 'website'), cf.get(oj, 'acRegex'), cf.get(oj, 'submitRegex')) for oj in cf.sections()]
 
@@ -105,19 +104,19 @@ class Crawler:
         self.acArchive[oj] = self.acArchive[oj] | set(acProblem)
         return html
 
-    def getInfoNoAuth(self, queryName='lqybzx'):
+    def getInfoNoAuth(self, query_name='lqybzx'):
         '''
         This function only browser the website without authentication and also use regex.
         For 'poj','hdu','zoj','fzu','acdream','bzoj','ural','csu','hust','spoj','sgu','vjudge','bnu','cqu','uestc','zucc'
-        :param query: queryName
+        :param query: query_name
         :return:
         '''
         import configparser
         import os
-        if queryName == '':
+        if query_name == '':
             name = self.name
         else:
-            name = queryName
+            name = query_name
         cf = configparser.ConfigParser()
         configFilePath = os.path.join(os.path.dirname(__file__), "regexDict.ini")
         cf.read(configFilePath)
@@ -152,12 +151,12 @@ class Crawler:
             # print submission[0],acProblem
             # return submission[0], acProblem
 
-    def getACdream(self, queryName=''):
+    def getACdream(self, query_name=''):
         oj = 'acdream'
-        if queryName == '':
+        if query_name == '':
             name = self.getName(oj)
         else:
-            name = queryName
+            name = query_name
         req = urllib.request.Request(
             url='http://acdream.info/user/' + name,
             headers=self.headers
@@ -181,12 +180,12 @@ class Crawler:
         self.acArchive[oj] = self.acArchive[oj] | set(acProblem)
         return submission[0], acProblem
 
-    def getAsyncACdream(self, html, queryName=''):
+    def getAsyncACdream(self, html, query_name=''):
         oj = 'acdream'
-        if queryName == '':
+        if query_name == '':
             name = self.name
         else:
-            name = queryName
+            name = query_name
         submission = re.findall('Submissions: <a href="/status\?name=.*?">([0-9]*?)</a>', html, re.S)
         linkAddress = re.findall(
             r'List of <span class="success-text">solved</span> problems</div>(.*?)<div class="block block-warning">',
@@ -200,12 +199,12 @@ class Crawler:
             self.wrongOJ[oj].append(name)
             yield oj, 0, 0
 
-    def showsgu(self, queryName=''):
+    def showsgu(self, query_name=''):
         oj = 'sgu'
-        if queryName == '':
+        if query_name == '':
             name = self.name
         else:
-            name = queryName
+            name = query_name
         postData = {
             'find_id': name
         }
@@ -241,17 +240,17 @@ class Crawler:
             self.wrongOJ[oj].append(name)
             return 0
 
-    def getCodeforces(self, queryName=''):
+    def getCodeforces(self, query_name=''):
         '''
         get JSON information from codeforces API and parser it
-        :param queryName:
+        :param query_name:
         :return: Boolean value which indicates success
         '''
         oj = 'codeforces'
-        if queryName == '':
+        if query_name == '':
             name = self.getName(oj)
         else:
-            name = queryName
+            name = query_name
         loopFlag = True
         loopTimes = 0
         count = 1000
@@ -293,19 +292,19 @@ class Crawler:
                 break
         return True
 
-    def asyncGetCodeforces(self, queryName=''):
+    def asyncGetCodeforces(self, query_name=''):
         '''
         get JSON information from codeforces API and parser it
-        :param queryName:
+        :param query_name:
         :return: Boolean value which indicates success
         '''
         import tornado.gen
         oj = 'codeforces'
         print('start CodeForce')
-        if queryName == '':
+        if query_name == '':
             name = self.getName(oj)
         else:
-            name = queryName
+            name = query_name
         loopFlag = True
         loopTimes = 0
         count = 1000
@@ -358,28 +357,28 @@ class Crawler:
             else:
                 break
 
-    def getCodechef(self, queryName=''):
+    def getCodechef(self, query_name=''):
         '''
         get JSON information from codechef Get Request and parser it
-        :param queryName:
+        :param query_name:
         :return: Boolean value which indicates success
         '''
         oj = 'codechef'
-        if queryName == '':
+        if query_name == '':
             name = self.getName(oj)
         else:
-            name = queryName
+            name = query_name
         req = urllib.request.Request(
             url='https://www.codechef.com/recent/user?page=0&user_handle=%s' % name,
             headers=self.headers
         )
-        jsonString = ''
+        json_string = ''
         try:
-            jsonString = self.opener.open(req).read().decode('utf8')
+            json_string = self.opener.open(req).read().decode('utf8')
         except:
             self.wrongOJ[oj].append(name)
             return 0
-        dataDict = json.loads(jsonString)
+        dataDict = json.loads(json_string)
         max_page = dataDict['max_page']
         if max_page == 0:
             self.submitNum[oj] += 0
@@ -390,13 +389,13 @@ class Crawler:
                 url='https://www.codechef.com/recent/user?page={}&user_handle={}'.format(page_num, name),
                 headers=self.headers
             )
-            jsonString = ''
+            json_string = ''
             try:
-                jsonString = self.opener.open(req).read().decode('utf8')
+                json_string = self.opener.open(req).read().decode('utf8')
             except:
                 self.wrongOJ[oj].append(name)
                 return 0
-            dataDict = json.loads(jsonString)
+            dataDict = json.loads(json_string)
             html = str(dataDict['content'])
             acProblems = []
             submitNum = 0
@@ -415,12 +414,12 @@ class Crawler:
         self.submitNum[oj] += submitNum
         return len(self.submission[oj])
 
-    def getSpoj(self, queryName=''):
+    def getSpoj(self, query_name=''):
         oj = 'spoj'
-        if queryName == '':
+        if query_name == '':
             name = self.getName(oj)
         else:
-            name = queryName
+            name = query_name
         req = urllib.request.Request(
             url='http://www.spoj.com/users/%s' % name,
             headers=self.headers
@@ -442,18 +441,18 @@ class Crawler:
             return 0
         return submission[0], acProblem
 
-    def getVjudge(self, queryName=''):
+    def getVjudge(self, query_name=''):
         '''
         We will set up a cache pool to restore the cookie and keep it
-        :param queryName:
+        :param query_name:
         :return:
         '''
         import tornado.gen
         oj = 'vjudge'
-        if queryName == '':
+        if query_name == '':
             name = self.getName(oj)
         else:
-            name = queryName
+            name = query_name
         client = tornado.httpclient.AsyncHTTPClient()
         VJheaders = {
             'Host': 'vjudge.net',
@@ -533,19 +532,19 @@ class Crawler:
             break
         return 1
 
-    def asyncGetVjudge(self, queryName=''):
+    def asyncGetVjudge(self, query_name=''):
         '''
         We will set up a cache pool to restore the cookie and keep it
         tornado will use it
-        :param queryName:
+        :param query_name:
         :return:
         '''
         import tornado.gen
         oj = 'vjudge'
-        if queryName == '':
+        if query_name == '':
             name = self.getName(oj)
         else:
-            name = queryName
+            name = query_name
         VJheaders = {
             'Host': 'vjudge.net',
             'Origin': 'http://vjudge.net',
@@ -624,12 +623,12 @@ class Crawler:
                 self.submitNum['vjudge'] += 1
         return
 
-    def getUestc(self, queryName=''):
+    def getUestc(self, query_name=''):
         oj = 'uestc'
-        if queryName == '':
+        if query_name == '':
             name = self.getName(oj)
         else:
-            name = queryName
+            name = query_name
         req = urllib.request.Request(
             url='http://acm.uestc.edu.cn/user/userCenterData/%s' % name,
             headers=self.headers,
@@ -716,7 +715,7 @@ class Crawler:
 
 
 if __name__ == '__main__':
-    a = Crawler(queryName={'default': 'sillyrobot', 'zucc': '31601185', 'vjudge': 'hxamszi'})
+    a = Crawler(query_name={'default': 'sillyrobot', 'zucc': '31601185', 'vjudge': 'hxamszi'})
     a.getVjudge()
     # print (a.getNoAuthRules())
     # a.getInfoNoAuth()
