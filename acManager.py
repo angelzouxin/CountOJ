@@ -157,6 +157,7 @@ if __name__ == '__main__':
 
     # get team info and count
     total_acManager = AcManager()
+    # total_acManager.get_pre_info(totalName+'.xls')
     total_acManager.get_IDlist('id_list.xls')
     total_acManager.get_count()
 
