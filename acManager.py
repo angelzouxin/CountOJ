@@ -6,6 +6,8 @@ import time
 import xlrd
 from xlwt import *
 
+from sqlUtil import sqlUtil
+
 __author__ = 'zouxin'
 
 
@@ -17,6 +19,7 @@ class AcManager:
         self.crawled_time = time.strftime('%Y-%m-%d %a %H:%M', time.localtime(time.time()))
         self.user_list = []
         self.col_id = []
+        self.sqlUtil = sqlUtil()
 
     def get_IDlist(self, id_file):
         self.crawled_time = time.strftime('%Y-%m-%d %a %H:%M', time.localtime(time.time()))
@@ -36,6 +39,27 @@ class AcManager:
             print({id, name}, oj_id)
             self.user_list.append([id, name, oj_id])
 
+    def get_pre(self):
+        #list of [userId,userName]
+        users = self.sqlUtil.get_user()
+        for user in users:
+            userId, userName = user
+            # list of [userInfoId, ojId, userOjId]
+            ojInfos = self.sqlUtil.get_userInfo_by_id(userId)
+            oj_id = {}
+            ac_archive = {}
+            sub_Num = {}
+            for ojInfo in ojInfos:
+                userInfoId, ojId, userOjId = ojInfo
+                ojName = self.sqlUtil.oj[ojId]
+                oj_id[ojName] = userOjId
+                sub_Num[ojName] = self.sqlUtil.get_subTimes_by_id(userInfoId)
+                ac_archive[ojName] = set(self.sqlUtil.get_subInfo_by_id(userInfoId))
+
+            self.user_list.append([userId, userName, oj_id, ac_archive, sub_Num])
+
+
+
     # get pre info from excel
     def get_pre_info(self, info_file, sheet_name1='ac_count', sheet_name2='ac_submission'):
         from xlsUtil import xlsUtil
@@ -46,7 +70,6 @@ class AcManager:
         info_head, info_achieve = xlsUtil.read_xls(info_file, sheet_name2)
 
         self.crawled_time = info_data[0][-1]
-        # print(self.crawel_date)
 
         rows, col = 0, len(info_data)
         for ac_num in info_achieve:
@@ -72,6 +95,7 @@ class AcManager:
             crawler.run()
             user.append(crawler.acArchive.copy())
             user.append(crawler.submitNum.copy())
+
 
     def save_count(self, out_file):
         from xlsUtil import xlsUtil
@@ -119,12 +143,38 @@ class AcManager:
         xlsUtil.write_xls(ws2, headings, datas)
         w.save(out_file)
 
+    def save_to_db(self):
+        pros = []
+        dailyInfos = []
+        date = datetime.datetime.today().strftime('%Y-%m-%d')
+        for user in self.user_list:
+            acTimes = {}
+            userId = user[0]
+            ac_Num, ac_archive = user[:-3:-1]
+            for ojId, acPros in ac_archive.items():
+                userInfoId = self.sqlUtil.info.get((userId, self.sqlUtil.ojInfo.get(ojId)))
+                if userInfoId is None: continue
+                acTimes[userInfoId] = len(acPros)
+                for pro in acPros:
+                    pros.append((userInfoId, pro, date))
+
+            for ojId, subTimes in ac_Num.items():
+                userInfoId = self.sqlUtil.info.get((userId, self.sqlUtil.ojInfo.get(ojId)))
+                if userInfoId is None: continue
+                if subTimes < 0:
+                    subTimes = -subTimes
+
+                dailyInfos.append((userInfoId, acTimes[userInfoId], subTimes, date))
+
+        self.sqlUtil.insert_dailyInfo(dailyInfos)
+        self.sqlUtil.insert_subInfo(pros)
+
     # get Incremental
     @staticmethod
     def get_today_mes(total_mes, pre_mes):
         res = AcManager()
         # count by user's id
-        today_dic = {data[0]: data[1:] for data in total_mes.user_list}
+        today_dic = {str(data[0]): data[1:] for data in total_mes.user_list}
         pre_dic = {data[0]: data[1:] for data in pre_mes.user_list}
 
         res.crawled_time = total_mes.crawled_time
@@ -142,26 +192,32 @@ class AcManager:
 
 
 if __name__ == '__main__':
-    headName = 'Count_list_'
-    sufNameFormat = '%Y_%m_%d'
-    today = datetime.datetime.today()
-    oneDay = datetime.timedelta(days=1)
-    yesterday = today - oneDay
-    fileName = headName + today.strftime(sufNameFormat)
-    preName = 'total_' + yesterday.strftime(sufNameFormat)
-    totalName = 'total_' + today.strftime(sufNameFormat)
-
-    # get pre ac info
-    pre_acManager = AcManager()
-    pre_acManager.get_pre_info(preName + '.xls')
-
-    # get team info and count
-    total_acManager = AcManager()
-    # total_acManager.get_pre_info(totalName+'.xls')
-    total_acManager.get_IDlist('id_list.xls')
-    total_acManager.get_count()
-
-    total_acManager.save_count(totalName + '.xls')
-    # get Incremental
-    today_acManager = AcManager.get_today_mes(total_acManager, pre_acManager)
-    today_acManager.save_count(fileName + '.xls')
+    # headName = 'Count_list_'
+    # sufNameFormat = '%Y_%m_%d'
+    # today = datetime.datetime.today()
+    # oneDay = datetime.timedelta(days=1)
+    # yesterday = today - oneDay
+    # fileName = headName + today.strftime(sufNameFormat)
+    # preName = 'xls/total_' + yesterday.strftime(sufNameFormat)
+    # totalName = 'xls/total_' + today.strftime(sufNameFormat)
+    #
+    # # get pre ac info
+    # pre_acManager = AcManager()
+    # pre_acManager.get_pre()
+    #
+    # # get team info and count
+    # total_acManager = AcManager()
+    # # total_acManager.get_pre_info(totalName+'.xls')
+    # total_acManager.get_IDlist('xls/id_list.xls')
+    # total_acManager.get_count()
+    # # total_acManager.get_counts()
+    # total_acManager.save_count(totalName + '.xls')
+    # # get Incremental
+    # today_acManager = AcManager.get_today_mes(total_acManager, pre_acManager)
+    # today_acManager.save_count(fileName + '.xls')
+    pre = AcManager()
+    pre.get_pre()
+    total = AcManager()
+    total.get_pre_info('xls/total_2017_05_24.xls')
+    today_acManager = AcManager.get_today_mes(total, pre)
+    today_acManager.save_to_db()

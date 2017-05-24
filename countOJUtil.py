@@ -26,7 +26,7 @@ class Crawler:
     # match dictionary.dict[oj]:[acRegex],[submitRegex]
     matchDict = {}
     supportedOJ = ['poj', 'hdu', 'zoj', 'codeforces', 'fzu', 'acdream', 'bzoj', 'ural', 'csu', 'hust', 'spoj', 'sgu',
-                   'vjudge', 'bnu', 'cqu', 'uestc', 'zucc', 'codechef']
+                   'vjudge', 'bnu', 'uestc', 'zucc', 'codechef']
 
     def __init__(self, query_name={}):
         '''
@@ -251,9 +251,10 @@ class Crawler:
             name = self.getName(oj)
         else:
             name = query_name
+        print('start ' + oj)
         loopFlag = True
         loopTimes = 0
-        count = 1000
+        count = 200
         startItem = 1 + loopTimes * count
         endItem = (loopTimes + 1) * count
         while loopFlag:
@@ -264,7 +265,7 @@ class Crawler:
             website = 'http://codeforces.com/api/user.status?handle=%s&from=%s&count=%s' % (name, startItem, endItem)
             # try to get information
             startItem = 1 + loopTimes * count
-            endItem = (loopTimes + 1) * count
+            endItem = count
             # updating data...
             try:
                 jsonString = urllib.request.urlopen(website).read().decode('utf-8')
@@ -280,7 +281,7 @@ class Crawler:
                     pass
                 # store the submit number
                 self.submitNum[oj] += len(data[u'result'])
-
+                print(len(data[u'result']))
                 # print self.subcf
                 for i in data[u'result']:
                     # only accept AC problem
@@ -290,6 +291,8 @@ class Crawler:
                         self.acArchive[oj].add(problemText)
             else:
                 break
+            print(loopTimes)
+        print('end ' + oj)
         return True
 
     def asyncGetCodeforces(self, query_name=''):
@@ -298,7 +301,7 @@ class Crawler:
         :param query_name:
         :return: Boolean value which indicates success
         '''
-        import tornado.gen
+        import tornado.httpclient
         oj = 'codeforces'
         print('start CodeForce')
         if query_name == '':
@@ -447,7 +450,7 @@ class Crawler:
         :param query_name:
         :return:
         '''
-        import tornado.gen
+        import tornado.httpclient
         oj = 'vjudge'
         if query_name == '':
             name = self.getName(oj)
